@@ -1,0 +1,491 @@
+generator client {
+  provider = "prisma-client-js"
+  // موتور ویندوز هم داخل بسته exe قرار گیرد تا برنامه روی ویندوز اجرا شود
+  binaryTargets = ["native", "windows"]
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------- کاربران و امنیت ----------------
+model User {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique
+  passwordHash String
+  salt         String
+  fullName     String   @default("")
+  role         String   @default("viewer") // admin / operator / viewer
+  active       Boolean  @default(true)
+  mustChangePassword Boolean @default(false)
+  failedAttempts     Int     @default(0)
+  lockedUntil        DateTime?
+  isSupervisor       Boolean @default(false) // اکانت مخفی سوپروایزر — لاگ ثبت نمی‌کند
+  expiresAt          DateTime? // تاریخ انقضای اعتبار اکانت — خالی = بدون محدودیت؛ بعد از این تاریخ ورود مسدود می‌شود
+  createdAt    DateTime @default(now())
+  sessions     Session[]
+}
+
+model Session {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  lastSeenAt DateTime? // آخرین فعالیت — برای انقضای بی‌کاری (idle timeout)
+  @@index([userId])
+}
+
+model AuditLog {
+  id         Int       @id @default(autoincrement())
+  ts         DateTime  @default(now())
+  username   String?
+  action     String
+  entity     String    @default("")
+  entityId   Int?
+  details    String    @default("")
+  beforeData String    @default("")
+  afterData  String    @default("")
+  @@index([ts])
+}
+
+// ---------------- شرکت‌ها و سال‌های مالی ----------------
+model Company {
+  id              Int           @id @default(autoincrement())
+  name            String
+  nationalId      String        @default("")
+  economicCode    String        @default("")
+  ssoBranchCode   String        @default("")
+  ssoWorkshopCode String        @default("")
+  ssoContractRow  String        @default("")
+  taxFileCode     String        @default("")
+  postalCode      String        @default("")
+  managerName     String        @default("")
+  logoPath        String        @default("")
+  address         String        @default("")
+  phone           String        @default("")
+  active          Boolean       @default(true)
+  fiscalYears     FiscalYear[]
+}
+
+model FiscalYear {
+  id          Int             @id @default(autoincrement())
+  companyId   Int
+  company     Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  jy          Int
+  title       String          @default("")
+  settings    FySetting[]
+  taxBrackets TaxBracket[]
+  attendanceMonths AttendanceMonth[]
+  payrollPeriods   PayrollPeriod[]
+  @@unique([companyId, jy])
+}
+
+model FySetting {
+  fiscalYearId Int
+  fiscalYear   FiscalYear @relation(fields: [fiscalYearId], references: [id], onDelete: Cascade)
+  key          String
+  value        String  @default("")
+  @@id([fiscalYearId, key])
+}
+
+model TaxBracket {
+  id           Int    @id @default(autoincrement())
+  fiscalYearId Int
+  fiscalYear   FiscalYear @relation(fields: [fiscalYearId], references: [id], onDelete: Cascade)
+  seq          Int
+  fromAmount   Int    @default(0)
+  toAmount     Int?
+  ratePercent  Float
+}
+
+// ---------------- پرسنل ----------------
+model Personnel {
+  id             Int      @id @default(autoincrement())
+  companyId      Int
+  personnelCode  String
+  cardNo         String   @default("")
+  firstName      String   @default("")
+  lastName       String   @default("")
+  fatherName     String   @default("")
+  nationalId     String   @default("")
+  idNumber       String   @default("")
+  idSerial       String   @default("")
+  idIssuePlace   String   @default("")
+  birthDate      String   @default("")
+  gender         String   @default("مرد")
+  maritalStatus  String   @default("مجرد")
+  dependents     Int      @default(0)
+  education      String   @default("")
+  mobile         String   @default("")
+  jobTitle       String   @default("")
+  jobCode        String   @default("") // کد شغل تامین اجتماعی — ممکن است حرف‌و‌عددی باشد (مثل 2035AG)
+  department     String   @default("عمومی") // بخش هتل: پذیرش، خانه‌داری، آشپزخانه، نگهبانی، عمومی — برای گزارش مرکز هزینه
+  photo          String   @default("") // عکس پرسنلی base64 — در قرارداد کار زیر سربرگ درج می‌شود
+  costCenter     String   @default("")
+  payslipGroup   String   @default("")
+  bankName       String   @default("")
+  bankAccount    String   @default("")
+  bankSheba      String   @default("")
+  ssoNumber      String   @default("")
+  ssoInsurer     String   @default("")
+  militaryStatus String   @default("")
+  isVeteran      Boolean  @default(false)
+  workLocation   String   @default("")
+  permanentNight Boolean  @default(false)
+  shiftId        Int?
+  ssoWorkerPct   Float?
+  ssoEmployerPct Float?
+  ssoUnempPct    Float?
+  address        String   @default("")
+  postalCode     String   @default("")
+  birthPlace     String   @default("")
+  insuranceType  Int      @default(2)   // 1خدمات درمانی/2تامین/3سلامت/4سایر/5ندارد
+  employmentType Int      @default(1)
+  jobCategory    Int      @default(12)
+  taxExemptionCode Int    @default(1)
+  status         String   @default("شاغل")
+  hireDate       String   @default("")
+  endWorkDate    String   @default("")
+  notes          String   @default("")
+  createdAt      DateTime @default(now())
+  contracts      Contract[]
+  decrees        Decree[]
+  loans          Loan[]
+  advances       Advance[]
+  leaves         Leave[]
+  shiftAssignments ShiftAssignment[]
+  shiftOverrides   ShiftOverride[]
+  attendanceDaily  AttendanceDaily[]
+  payrollLines     PayrollLine[]
+  payrollSummaries PayrollSummary[]
+  payrollManuals   PayrollManual[]
+  openingBalances  OpeningBalance[]
+  @@unique([companyId, personnelCode])
+  @@index([cardNo])
+}
+
+// ---------------- قراردادها ----------------
+model Contract {
+  id                Int      @id @default(autoincrement())
+  personnelId       Int
+  personnel         Personnel @relation(fields: [personnelId], references: [id], onDelete: Cascade)
+  contractType      String   @default("ماهانه ثابت")
+  hourlyRate        Int      @default(0)  // مبالغ حقوقی عدد صحیح ریال
+  dailyRate         Int      @default(0)
+  monthlyWage       Int      @default(0)
+  projectAmount     Int      @default(0)
+  startDate         String   @default("")
+  endDate           String   @default("")
+  payCycle          String   @default("ماهانه")
+  insuranceRequired Boolean  @default(true)
+  notes             String   @default("")
+  // قرارداد هوشمند (نسخه ۱٫۲٫۰) — نسخه‌بندی و سند تولیدشده
+  docKind           String   @default("") // ساعتی / مبلغ معین — خالی = دستی
+  periodKey         String   @default("") // ماه شمول نسخه قرارداد — مثل 1405/08
+  snapshot          String   @default("") // JSON مقادیر پرشده در زمان تولید (سابقه قرارداد)
+  isValid           Boolean  @default(true) // نسخه معتبر فعلی یا تاریخچه
+  createdAt         DateTime @default(now())
+}
+
+// فرم‌های چاپی ضروری (نسخه ۱٫۲٫۰) — آپلود Word/PDF/Excel/عکس برای پرینت
+model PrintForm {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String   @default("")
+  fileName    String
+  mime        String   @default("application/octet-stream")
+  size        Int      @default(0)
+  data        String   @default("") // base64 — اجرای کاملا محلی بدون فایل‌سیستم خارجی
+  createdAt   DateTime @default(now())
+}
+
+// ---------------- احکام پرسنلی ----------------
+model Decree {
+  id               Int      @id @default(autoincrement())
+  personnelId      Int
+  personnel        Personnel @relation(fields: [personnelId], references: [id], onDelete: Cascade)
+  effectiveDate    String
+  @@index([personnelId])
+  jobWage          Int    @default(0)
+  seniorityWage    Int    @default(0)
+  childAllowance   Int    @default(0)
+  housing          Int    @default(0)
+  food             Int    @default(0)
+  adjustmentDiff   Int    @default(0)
+  supervision      Int    @default(0)
+  educationAid     Int    @default(0)
+  laborMarket      Int    @default(0)
+  attractionPercent Int   @default(0)
+  attractionAmount Int    @default(0)
+  otherBenefits    Int    @default(0)
+  workerBen        Int    @default(0)
+  fixedOvertime    Int    @default(0)
+  familyAllowance  Int    @default(0)
+  shiftAllowance   Int    @default(0)
+  notes            String   @default("")
+  createdAt        DateTime @default(now())
+}
+
+// ---------------- شیفت کاری ----------------
+model Shift {
+  id        Int      @id @default(autoincrement())
+  companyId Int
+  name      String
+  schedule  String   @default("{}") // JSON {"0":[480,1020]}
+  premiumPct Float  @default(10) // حق شیفت (نوبت‌کاری) — درصد روی ساعات کارکرد غیرشب
+  notes     String   @default("")
+  createdAt DateTime @default(now())
+}
+
+model ShiftAssignment {
+  id          Int  @id @default(autoincrement())
+  personnelId Int
+  personnel   Personnel @relation(fields: [personnelId], references: [id], onDelete: Cascade)
+  jy          Int
+  jm          Int
+  shiftId     Int
+  @@unique([personnelId, jy, jm])
+}
+
+// شیفت روزانه/تک‌روزه — استثنای یک روز مشخص برای یک فرد (نسخه ۱.۴)
+// kind: off = روز تعطیل برای فرد | custom = ساعت کاری خاص همان روز | shift = شیفت تعریف‌شده
+model ShiftOverride {
+  id          Int       @id @default(autoincrement())
+  personnelId Int
+  personnel   Personnel @relation(fields: [personnelId], references: [id], onDelete: Cascade)
+  jy          Int
+  jm          Int
+  jd          Int
+  kind        String    @default("custom")
+  shiftId     Int?      // فقط برای kind=shift
+  startMin    Int       @default(480)  // دقیقه از نیمه‌شب
+  endMin      Int       @default(960)  // دقیقه از نیمه‌شب
+  note        String    @default("")
+  createdAt   DateTime  @default(now())
+  @@unique([personnelId, jy, jm, jd])
+  @@index([jy, jm])
+}
+
+// ---------------- حضور و غیاب ----------------
+model AttendanceMonth {
+  id            Int    @id @default(autoincrement())
+  fiscalYearId  Int
+  fiscalYear    FiscalYear @relation(fields: [fiscalYearId], references: [id], onDelete: Cascade)
+  jy            Int
+  jm            Int
+  source        String @default("دستی")
+  importedAt    DateTime @default(now())
+  days          AttendanceDaily[]
+  @@unique([fiscalYearId, jy, jm])
+}
+
+model AttendanceDaily {
+  id              Int  @id @default(autoincrement())
+  monthId         Int
+  month           AttendanceMonth @relation(fields: [monthId], references: [id], onDelete: Cascade)
+  personnelId     Int
+  personnel       Personnel @relation(fields: [personnelId], references: [id], onDelete: Cascade)
+  day             Int
+  status          String @default("بدون شیفت")
+  entry1          Int  @default(-1)
+  exit1           Int  @default(-1)
+  entry2          Int  @default(-1)
+  exit2           Int  @default(-1)
+  entry3          Int  @default(-1)
+  exit3           Int  @default(-1)
+  lateMin         Int  @default(0)
+  earlyMin        Int  @default(0)
+  missingMin      Int  @default(0)
+  leaveMin        Int  @default(0)
+  missionMin      Int  @default(0)
+  overtimeMin     Int  @default(0)
+  freeOvertimeMin Int  @default(0)
+  workedMin       Int  @default(0)
+  expectedMin     Int  @default(0)
+  leaveKind       String @default("")
+  edited          Boolean @default(false) // ستاره: ویرایش دستی توسط غیر سوپروایزر
+  @@unique([monthId, personnelId, day])
+  @@index([personnelId])
+}
+
+// ---------------- مانده‌های اولیه (از قبل) پرسنل ----------------
+// مانده‌هایی که قبل از شروع کار با برنامه وجود داشته‌اند:
+// روزهای سابقه، سنوات انباشته، مانده مرخصی، بدهی/بستانکاری جاری،
+// عیدی پرداخت‌نشده، بدهی مالیاتی و سایر — با اثر انتخابی در محاسبه حقوق
+model OpeningBalance {
+  id          Int       @id @default(autoincrement())
+  personnelId Int
+  personnel   Personnel @relation(fields: [personnelId], references: [id], onDelete: Cascade)
+  title       String    @default("")
+  // seniority_days روز سابقه / seniority_amount سنوات انباشته / leave_balance مانده مرخصی /
+  // current_balance بدهی-بستانکاری جاری / eid_unpaid عیدی پرداخت‌نشده / tax_debt بدهی مالیات / other سایر
+  kind        String    @default("other")
+  unit        String    @default("amount") // amount مبلغ (ریال) / days تعداد روز
+  amount      Float     @default(0)        // مبلغ (ریال) یا تعداد روز
+  // اثر در محاسبه حقوق:
+  // earning_ins درآمد مشمول بیمه و مالیات / earning_free درآمد بدون بیمه و مالیات /
+  // deduction کسر از حقوق / none بدون اثر در حقوق (اطلاعاتی)
+  effect      String    @default("none")
+  consumed    Boolean   @default(false)    // با تأیید/پرداخت دوره مصرف شد
+  usedPeriod  String    @default("")       // دوره مصرف jy-jm
+  notes       String    @default("")
+  createdAt   DateTime  @default(now())
+  @@index([personnelId])
+}
+
+// ---------------- وام، مساعده، مرخصی ----------------
+model Loan {
+  id                Int     @id @default(autoincrement())
+  personnelId       Int
+  personnel         Personnel @relation(fields: [personnelId], references: [id], onDelete: Cascade)
+  title             String  @default("وام")
+  totalAmount       Int
+  installment       Int
+  installmentsCount Int     @default(0)
+  paidCount         Int     @default(0)
+  startPeriod       String  @default("")
+  remaining         Int     @default(0)
+  active            Boolean @default(true)
+  notes             String  @default("")
+}
+
+model Advance {
+  id          Int     @id @default(autoincrement())
+  personnelId Int
+  personnel   Personnel @relation(fields: [personnelId], references: [id], onDelete: Cascade)
+  payDate     String  @default("")
+  amount      Int
+  recovered   Boolean @default(false)
+  period      String  @default("")
+  notes       String  @default("")
+  @@index([personnelId])
+}
+
+model Leave {
+  id          Int    @id @default(autoincrement())
+  personnelId Int
+  personnel   Personnel @relation(fields: [personnelId], references: [id], onDelete: Cascade)
+  fromDate    String
+  toDate      String
+  days        Float  @default(0)
+  leaveKind   String @default("استحقاقی")
+  approved    Boolean @default(true)
+  notes       String @default("")
+  @@index([personnelId])
+}
+
+// ---------------- موتور حقوق و دستمزد ----------------
+model PayrollItemConfig {
+  code         String  @id
+  title        String
+  kind         String  @default("earning") // earning / deduction / employer
+  formulaKey   String  @default("manual")
+  taxMode      String  @default("m84")     // none / m84 / lump / percent
+  taxPercent   Float   @default(0)
+  insured      Boolean @default(true)
+  active       Boolean @default(true)
+  sort         Int     @default(100)
+  systemLocked Boolean @default(false)
+}
+
+model PayrollPeriod {
+  id           Int    @id @default(autoincrement())
+  fiscalYearId Int
+  fiscalYear   FiscalYear @relation(fields: [fiscalYearId], references: [id], onDelete: Cascade)
+  jy           Int
+  jm           Int
+  status       String @default("پیش‌نویس")
+  calculatedAt DateTime @default(now())
+  lines        PayrollLine[]
+  summaries    PayrollSummary[]
+  manuals      PayrollManual[]
+  @@unique([fiscalYearId, jy, jm])
+}
+
+model PayrollLine {
+  id          Int     @id @default(autoincrement())
+  periodId    Int
+  period      PayrollPeriod @relation(fields: [periodId], references: [id], onDelete: Cascade)
+  personnelId Int
+  personnel   Personnel @relation(fields: [personnelId], references: [id], onDelete: Cascade)
+  itemCode    String
+  amount      Int     @default(0) // ریال — عدد صحیح
+  @@index([periodId, personnelId])
+}
+
+model PayrollSummary {
+  id              Int     @id @default(autoincrement())
+  periodId        Int
+  period          PayrollPeriod @relation(fields: [periodId], references: [id], onDelete: Cascade)
+  personnelId     Int
+  personnel       Personnel @relation(fields: [personnelId], references: [id], onDelete: Cascade)
+  workedDays      Float   @default(0)
+  leaveDays       Float   @default(0)
+  leaveBalance    Float   @default(0)
+  overtimeMin     Int     @default(0)
+  gross           Int   @default(0)
+  insuredBase     Int   @default(0)
+  workerIns       Int   @default(0)
+  employerIns     Int   @default(0)
+  unemploymentIns Int   @default(0)
+  taxBase         Int   @default(0)
+  tax             Int   @default(0)
+  totalDeductions Int   @default(0)
+  netPay          Int   @default(0)
+  prevBalance     Int   @default(0)
+  payApproved     Boolean @default(true)
+  payPaid         Boolean @default(false)
+  payNote         String  @default("")
+  @@unique([periodId, personnelId])
+  @@index([personnelId])
+}
+
+model PayrollManual {
+  id          Int   @id @default(autoincrement())
+  periodId    Int
+  period      PayrollPeriod @relation(fields: [periodId], references: [id], onDelete: Cascade)
+  personnelId Int
+  personnel   Personnel @relation(fields: [personnelId], references: [id], onDelete: Cascade)
+  itemCode    String
+  amount      Int   @default(0) // ریال — عدد صحیح
+  @@unique([periodId, personnelId, itemCode])
+}
+
+// ---------------- گزارش‌ساز ----------------
+model ReportDef {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String   @default("")
+  config      String
+  isBuiltin   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
+
+// ---------------- ماژول‌های نصب‌شده ----------------
+model InstalledModule {
+  key         String  @id
+  title       String
+  enabled     Boolean @default(true)
+  licenseNote String  @default("")
+}
+
+// ---------------- تقویم ----------------
+model CalendarEvent {
+  id     Int    @id @default(autoincrement())
+  jy     Int
+  jm     Int
+  jd     Int
+  kind   String // holiday / occasion
+  title  String
+  source String @default("دستی")
+  @@index([jy, jm])
+}
+
+// ---------------- تنظیمات عمومی ----------------
+model AppSetting {
+  key   String @id
+  value String @default("")
+}

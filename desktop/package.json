@@ -1,0 +1,60 @@
+{
+  "name": "payroll-desktop",
+  "version": "1.4.7",
+  "description": "سامانه جامع حقوق و دستمزد و حضور و غیاب — نسخه دسکتاپ (exe نصبی Assisted)",
+  "main": "main.js",
+  "author": "Arian Kavir Rafsanjan",
+  "license": "UNLICENSED",
+  "scripts": {
+    "dist": "electron-builder --win nsis",
+    "dist:installer": "electron-builder --win nsis"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "ir.ariankavir.payroll",
+    "productName": "PayrollSystem",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "icon.png"
+    ],
+    "extraResources": [
+      {
+        "from": "../webapp-standalone",
+        "to": "webapp",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "icon.png",
+      "signAndEditExecutable": false,
+      "sign": null
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "runAfterFinish": true,
+      "include": "installer.nsh",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "سامانه حقوق و دستمزد"
+    },
+    "compression": "maximum"
+  }
+}

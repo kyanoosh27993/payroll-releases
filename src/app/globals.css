@@ -1,0 +1,220 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('/fonts/Vazirmatn-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('/fonts/Vazirmatn-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('/fonts/Vazirmatn-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: 'Vazirmatn', 'Tahoma', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Vazirmatn', 'Tahoma', monospace;
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-gold: var(--gold);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --radius: 0.75rem;
+  --background: #f6f7f9;
+  --foreground: #111827;
+  --card: #ffffff;
+  --card-foreground: #111827;
+  --popover: #ffffff;
+  --popover-foreground: #111827;
+  --primary: #0e7a5f;           /* سبز زمردی حرفه‌ای مالی */
+  --primary-foreground: #ffffff;
+  --secondary: #eef2f1;
+  --secondary-foreground: #134e4a;
+  --muted: #f1f3f5;
+  --muted-foreground: #64748b;
+  --accent: #e8f4f0;
+  --accent-foreground: #0e7a5f;
+  --destructive: #dc2626;
+  --success: #059669;
+  --warning: #d97706;
+  --gold: #b45309;
+  --border: #e4e7ec;
+  --input: #d6dae1;
+  --ring: #0e7a5f;
+  --chart-1: #0e7a5f;
+  --chart-2: #b45309;
+  --chart-3: #475569;
+  --chart-4: #059669;
+  --chart-5: #d97706;
+  /* سایدبار: زغالی لوکس */
+  --sidebar: #0c1211;
+  --sidebar-foreground: #cbd5d1;
+  --sidebar-primary: #10b981;
+  --sidebar-primary-foreground: #04110d;
+  --sidebar-accent: #16211e;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #1c2a26;
+  --sidebar-ring: #10b981;
+}
+
+.dark {
+  --background: #0b0f0e;
+  --foreground: #e6eae8;
+  --card: #121716;
+  --card-foreground: #e6eae8;
+  --popover: #121716;
+  --popover-foreground: #e6eae8;
+  --primary: #10b981;
+  --primary-foreground: #04110d;
+  --secondary: #1a2220;
+  --secondary-foreground: #d1fae5;
+  --muted: #161d1b;
+  --muted-foreground: #8ba39c;
+  --accent: #14201c;
+  --accent-foreground: #6ee7b7;
+  --destructive: #ef4444;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --gold: #fbbf24;
+  --border: #232d2a;
+  --input: #2a3532;
+  --ring: #10b981;
+  --chart-1: #10b981;
+  --chart-2: #fbbf24;
+  --chart-3: #94a3b8;
+  --chart-4: #34d399;
+  --chart-5: #f59e0b;
+  --sidebar: #080c0b;
+  --sidebar-foreground: #a8b8b3;
+  --sidebar-primary: #10b981;
+  --sidebar-primary-foreground: #04110d;
+  --sidebar-accent: #131b19;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #1a2421;
+  --sidebar-ring: #10b981;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    font-family: 'Vazirmatn', 'Tahoma', sans-serif;
+    font-feature-settings: "ss01";
+  }
+  body {
+    @apply bg-background text-foreground;
+    letter-spacing: -0.01em;
+  }
+  /* اعداد فارسی با فاصله‌گذاری تمیز */
+  .num { font-variant-numeric: tabular-nums; }
+}
+
+/* اسکرول‌بار ظریف و حرفه‌ای */
+::-webkit-scrollbar { width: 9px; height: 9px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.35);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover { background-color: rgba(100, 116, 139, 0.6); }
+::-webkit-scrollbar-corner { background: transparent; }
+
+/* جدول‌های داده — زیبرا هماهنگ با تم پویا (تیره/روشن خودکار از متغیرهای تم پیروی می‌کند) */
+[data-slot="table-body"] tr:nth-child(even) {
+  background-color: color-mix(in srgb, var(--foreground) 4%, transparent);
+}
+
+/* کارت‌ها: سایه چندلایه ظریف */
+.shadow-luxe {
+  box-shadow:
+    0 1px 2px rgba(16, 24, 40, 0.04),
+    0 4px 12px -2px rgba(16, 24, 40, 0.06);
+}
+.shadow-luxe-lg {
+  box-shadow:
+    0 2px 6px rgba(16, 24, 40, 0.06),
+    0 16px 40px -12px rgba(16, 24, 40, 0.14);
+}
+
+/* کاغذ فیش / گزارش چاپی — سفید با سطرهای خیلی کمرنگ */
+.print-sheet {
+  background: #ffffff;
+  color: #111827;
+}
+.print-sheet .p-zebra { background: #f6f7f8; }
+.print-sheet .p-head  { background: #e8eaed; color: #111827; }
+
+@media print {
+  body { background: #fff !important; }
+  .no-print { display: none !important; }
+}
+
+/* انیمیشن ورود صفحات */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-up { animation: fade-up 0.25s ease-out both; }
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.shimmer {
+  background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.25) 50%, transparent 70%);
+  background-size: 200% 100%;
+  animation: shimmer 2.2s infinite;
+}
